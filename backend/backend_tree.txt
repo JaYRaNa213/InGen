@@ -1,0 +1,29 @@
+backend/
+├── .env
+├── .ignore
+├── backend_tree.txt
+├── controllers
+│   └── storyGenerator.js
+├── google-vision.json
+├── package-lock.json
+├── package.json
+├── routes
+│   └── story.route.js
+├── server.js
+├── testAuth.js
+├── testVision.js
+├── testVisionSimple.js
+├── tree.js
+├── uploads
+│   ├── 05cc7a506a1f5b8ae72a16644634e89a
+│   ├── 12f93f9cdcc28617531a9ec8f6d60649
+│   ├── 605b6fffc18d6e311e3579c8328925c9
+│   ├── 78c5e7591f1c1a93996fb8bda9656438
+│   ├── a7f4308968c9f59f01d5703dfd1acbc2
+│   ├── afb10bcaed69e7a2957cbc64ca2f5900
+│   └── jj.jpg
+└── utils
+    ├── captionGen.js
+    ├── cloudinary.js
+    ├── musicMatch.js
+    └── vision.js

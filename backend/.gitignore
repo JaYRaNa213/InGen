@@ -1,0 +1,14 @@
+
+
+
+.env
+.node_modules
+.git
+.vscode
+package-lock.json
+
+google-vision.json
+uploads/
+node_modules/
+.env
+*.log
