@@ -202,12 +202,18 @@
 // });
 
 
-
-
-
-
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+  Image,
+  ScrollView,
+  useColorScheme,
+  Platform,
+} from 'react-native';
 import { Camera } from 'expo-camera';
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
@@ -215,11 +221,20 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as MediaLibrary from 'expo-media-library';
 import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
-import Colors from '../constants/Colors';
-import StoryPreview from '../components/StoryPreview';
-import { API_URL } from '@env';
+import { generateStory } from '../services/api';
+import { Colors } from '../constants/Colors';
 
-// Fallback story if API fails
+const filterStyles = {
+  'bike-vibe': { backgroundColor: 'rgba(255, 140, 0, 0.3)' },
+  'temple-vibe': { backgroundColor: 'rgba(255, 248, 200, 0.3)' },
+  'nature-vibe': { backgroundColor: 'rgba(0, 128, 0, 0.3)' },
+  'birthday-vibe': { backgroundColor: 'rgba(255, 105, 180, 0.3)' },
+  'friends-vibe': { backgroundColor: 'rgba(0, 191, 255, 0.3)' },
+  'love-vibe': { backgroundColor: 'rgba(255, 20, 147, 0.3)' },
+  'college-vibe': { backgroundColor: 'rgba(139, 69, 19, 0.3)' },
+  default: { backgroundColor: 'rgba(0, 0, 0, 0.2)' },
+};
+
 const mockStoryData = {
   caption: 'A beautiful moment captured! 🌈',
   emojis: ['🌟', '🎉', '💫'],
@@ -235,7 +250,11 @@ export default function HomeScreen() {
   const [model, setModel] = useState(null);
   const [imageUri, setImageUri] = useState(null);
   const [storyData, setStoryData] = useState(null);
+  const [labels, setLabels] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const colorScheme = useColorScheme();
+  const tint = Colors[colorScheme ?? 'light'].tint;
 
   useEffect(() => {
     (async () => {
@@ -253,40 +272,27 @@ export default function HomeScreen() {
     setLoading(true);
     setStoryData(null);
 
-    const photo = await cameraRef.current.takePictureAsync({ base64: true, skipProcessing: true });
-    setImageUri(photo.uri);
-
-    const manipulated = await ImageManipulator.manipulateAsync(
-      photo.uri,
-      [{ resize: { width: 300 } }],
-      { base64: true }
-    );
-
-    const imageTensor = await tf.browser.fromPixelsAsync({ uri: manipulated.uri });
-    const predictions = await model.detect(imageTensor);
-    const topLabels = predictions.map(p => p.class);
-
     try {
-      const formData = new FormData();
-      formData.append('image', {
-        uri: manipulated.uri,
-        type: 'image/jpeg',
-        name: 'photo.jpg',
-      });
+      const photo = await cameraRef.current.takePictureAsync({ base64: true, skipProcessing: true });
+      setImageUri(photo.uri);
 
-      const res = await fetch(`${API_URL}/api/story/generate`, {
-        method: 'POST',
-        body: formData,
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const manipulated = await ImageManipulator.manipulateAsync(
+        photo.uri,
+        [{ resize: { width: 300 } }],
+        { base64: true }
+      );
 
-      const data = await res.json();
-      console.log('🧠 AI Response:', data);
+      const imageTensor = await tf.browser.fromPixelsAsync({ uri: manipulated.uri });
+      const predictions = await model.detect(imageTensor);
+      const topLabels = predictions.map(p => p.class);
+      setLabels(topLabels);
 
-      if (!data || !data.caption) throw new Error('No data from API');
+      const data = await generateStory(manipulated);
+      if (!data || !data.caption) throw new Error('No story received');
+
       setStoryData(data);
     } catch (e) {
-      console.warn('⚠️ API failed. Using mock data:', e.message);
+      console.warn('⚠️ Falling back to mock data:', e.message);
       setStoryData(mockStoryData);
     }
 
@@ -296,6 +302,7 @@ export default function HomeScreen() {
   const handleRetake = () => {
     setImageUri(null);
     setStoryData(null);
+    setLabels([]);
   };
 
   if (hasPermission === null)
@@ -306,7 +313,26 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       {imageUri && storyData ? (
-        <StoryPreview imageUri={imageUri} storyData={storyData} onRetake={handleRetake} />
+        <ScrollView>
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: imageUri }} style={styles.preview} />
+            <View style={[StyleSheet.absoluteFillObject, filterStyles[storyData.filter] || filterStyles.default]} />
+          </View>
+
+          <Text style={styles.subText}>🔍 Labels: {labels.join(', ')}</Text>
+
+          <View style={styles.resultBox}>
+            <Text style={styles.result}>🎨 Filter: {storyData.filter}</Text>
+            <Text style={styles.result}>📝 Caption: {storyData.caption}</Text>
+            <Text style={styles.result}>😍 Emojis: {storyData.emojis.join(' ')}</Text>
+            <Text style={styles.result}>🎵 Song: {storyData.song.title}</Text>
+          </View>
+
+          <TouchableOpacity style={styles.button} onPress={handleRetake}>
+            <Ionicons name="camera" size={24} color="white" />
+            <Text style={styles.buttonText}>Retake</Text>
+          </TouchableOpacity>
+        </ScrollView>
       ) : (
         <>
           <Camera style={styles.camera} type={Camera.Constants.Type.back} ref={cameraRef} />
@@ -320,7 +346,7 @@ export default function HomeScreen() {
       {loading && (
         <ActivityIndicator
           size="large"
-          color={Colors.tint}
+          color={tint}
           style={{ marginTop: 20 }}
         />
       )}
@@ -342,6 +368,47 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
     height: 500,
+  },
+  imageContainer: {
+    position: 'relative',
+    height: 450,
+    marginBottom: 10,
+  },
+  preview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  subText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginVertical: 10,
+  },
+  resultBox: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 15,
+    margin: 10,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0px 2px 5px rgba(0,0,0,0.2)',
+      },
+    }),
+  },
+  result: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 6,
   },
   button: {
     flexDirection: 'row',

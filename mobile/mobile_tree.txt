@@ -1,5 +1,7 @@
 mobile/
 ├── .env
+├── .env.development
+├── .env.production
 ├── .gitignore
 ├── .vscode
 │   └── settings.json
@@ -7,6 +9,7 @@ mobile/
 │   ├── +not-found.tsx
 │   ├── index.tsx
 │   └── _layout.tsx
+├── app.config.js
 ├── App.js
 ├── app.json
 ├── assets
@@ -27,15 +30,18 @@ mobile/
 ├── babel.config.js
 ├── components
 │   ├── CustomToast.js
-│   └── StoryPreview.jsx
+│   ├── StoryPreview.jsx
+│   ├── ThemedText.tsx
+│   └── ThemedView.tsx
 ├── constants
 │   └── Colors.ts
+├── env.d.ts
 ├── eslint.config.js
-├── expo-env.d.ts
 ├── hooks
 │   ├── useColorScheme.ts
 │   ├── useColorScheme.web.ts
 │   └── useThemeColor.ts
+├── jsconfig.json
 ├── mobile_tree.txt
 ├── package-lock.json
 ├── package.json
