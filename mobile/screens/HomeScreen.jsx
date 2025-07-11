@@ -224,6 +224,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { generateStory } from '../services/api';
 import { Colors } from '../constants/Colors';
 
+
+
 const filterStyles = {
   'bike-vibe': { backgroundColor: 'rgba(255, 140, 0, 0.3)' },
   'temple-vibe': { backgroundColor: 'rgba(255, 248, 200, 0.3)' },
@@ -335,7 +337,14 @@ export default function HomeScreen() {
         </ScrollView>
       ) : (
         <>
-          <Camera style={styles.camera} type={Camera.Constants.Type.back} ref={cameraRef} />
+          {Platform.OS === 'web' ? (
+  <View style={[styles.camera, { backgroundColor: '#ccc', justifyContent: 'center', alignItems: 'center' }]}>
+    <Text>📸 Camera preview not available on Web</Text>
+  </View>
+) : (
+  <Camera style={styles.camera} type={Camera.Constants.Type.back} ref={cameraRef} />
+)}
+
           <TouchableOpacity style={styles.button} onPress={takePhotoAndDetect}>
             <Ionicons name="image-outline" size={24} color="white" />
             <Text style={styles.buttonText}>Capture & Generate</Text>
