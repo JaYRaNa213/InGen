@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 const API_URL = Constants.expoConfig?.extra?.API_URL;
 
 // 🔁 Fallback for safety
-const BASE_URL = API_URL || 'http://192.168.1.5:5000'; // Update with your dev IP if needed
+const BASE_URL = API_URL || 'http://192.168.251.43:5000'; // Update with your dev IP if needed
 
 /**
  * 📤 Upload image to generate story from backend AI

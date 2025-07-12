@@ -35,6 +35,7 @@ mobile/
 │   └── ThemedView.tsx
 ├── constants
 │   └── Colors.ts
+├── eas.json
 ├── env.d.ts
 ├── eslint.config.js
 ├── hooks

@@ -202,29 +202,36 @@
 // });
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  StyleSheet,
-  Image,
-  ScrollView,
-  useColorScheme,
-  Platform,
+  View, Text, TouchableOpacity, ActivityIndicator, StyleSheet,
+  Image, ScrollView, useColorScheme, Platform,
 } from 'react-native';
-import { Camera } from 'expo-camera';
-import * as tf from '@tensorflow/tfjs';
+import { Camera, CameraType } from 'expo-camera';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as MediaLibrary from 'expo-media-library';
 import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
-import { generateStory } from '../services/api';
 import { Colors } from '../constants/Colors';
-
-
+import { fetch as tfFetch, decodeJpeg } from '@tensorflow/tfjs-react-native';
+import { generateStory } from '../services/api';
 
 const filterStyles = {
   'bike-vibe': { backgroundColor: 'rgba(255, 140, 0, 0.3)' },
@@ -260,10 +267,9 @@ export default function HomeScreen() {
 
   useEffect(() => {
     (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      const libStatus = await MediaLibrary.requestPermissionsAsync();
-      setHasPermission(status === 'granted' && libStatus.status === 'granted');
-      await tf.ready();
+      const { status: cameraStatus } = await Camera.requestCameraPermissionsAsync();
+      const { status: mediaStatus } = await MediaLibrary.requestPermissionsAsync();
+      setHasPermission(cameraStatus === 'granted' && mediaStatus === 'granted');
       const loadedModel = await cocoSsd.load();
       setModel(loadedModel);
     })();
@@ -284,14 +290,15 @@ export default function HomeScreen() {
         { base64: true }
       );
 
-      const imageTensor = await tf.browser.fromPixelsAsync({ uri: manipulated.uri });
+      const response = await tfFetch(manipulated.uri, {}, { isBinary: true });
+      const imageDataArrayBuffer = await response.arrayBuffer();
+      const imageTensor = decodeJpeg(new Uint8Array(imageDataArrayBuffer));
       const predictions = await model.detect(imageTensor);
       const topLabels = predictions.map(p => p.class);
       setLabels(topLabels);
 
       const data = await generateStory(manipulated);
       if (!data || !data.caption) throw new Error('No story received');
-
       setStoryData(data);
     } catch (e) {
       console.warn('⚠️ Falling back to mock data:', e.message);
@@ -307,10 +314,8 @@ export default function HomeScreen() {
     setLabels([]);
   };
 
-  if (hasPermission === null)
-    return <Text style={styles.statusText}>Requesting permissions...</Text>;
-  if (hasPermission === false)
-    return <Text style={styles.statusText}>No access to camera</Text>;
+  if (hasPermission === null) return <ActivityIndicator size="large" />;
+  if (hasPermission === false) return <Text>No access to camera or media library</Text>;
 
   return (
     <View style={styles.container}>
@@ -320,16 +325,13 @@ export default function HomeScreen() {
             <Image source={{ uri: imageUri }} style={styles.preview} />
             <View style={[StyleSheet.absoluteFillObject, filterStyles[storyData.filter] || filterStyles.default]} />
           </View>
-
           <Text style={styles.subText}>🔍 Labels: {labels.join(', ')}</Text>
-
           <View style={styles.resultBox}>
             <Text style={styles.result}>🎨 Filter: {storyData.filter}</Text>
             <Text style={styles.result}>📝 Caption: {storyData.caption}</Text>
             <Text style={styles.result}>😍 Emojis: {storyData.emojis.join(' ')}</Text>
             <Text style={styles.result}>🎵 Song: {storyData.song.title}</Text>
           </View>
-
           <TouchableOpacity style={styles.button} onPress={handleRetake}>
             <Ionicons name="camera" size={24} color="white" />
             <Text style={styles.buttonText}>Retake</Text>
@@ -338,26 +340,20 @@ export default function HomeScreen() {
       ) : (
         <>
           {Platform.OS === 'web' ? (
-  <View style={[styles.camera, { backgroundColor: '#ccc', justifyContent: 'center', alignItems: 'center' }]}>
-    <Text>📸 Camera preview not available on Web</Text>
-  </View>
-) : (
-  <Camera style={styles.camera} type={Camera.Constants.Type.back} ref={cameraRef} />
-)}
-
+            <View style={[styles.camera, { backgroundColor: '#ccc', justifyContent: 'center', alignItems: 'center' }]}>
+              <Text>📸 Camera preview not available on Web</Text>
+            </View>
+          ) : (
+            <Camera style={styles.camera} type={CameraType.back} ref={cameraRef} />
+          )}
           <TouchableOpacity style={styles.button} onPress={takePhotoAndDetect}>
             <Ionicons name="image-outline" size={24} color="white" />
             <Text style={styles.buttonText}>Capture & Generate</Text>
           </TouchableOpacity>
         </>
       )}
-
       {loading && (
-        <ActivityIndicator
-          size="large"
-          color={tint}
-          style={{ marginTop: 20 }}
-        />
+        <ActivityIndicator size="large" color={tint} style={{ marginTop: 20 }} />
       )}
     </View>
   );
@@ -368,11 +364,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: Constants.statusBarHeight,
     backgroundColor: '#f9f9f9',
-  },
-  statusText: {
-    marginTop: 100,
-    fontSize: 18,
-    textAlign: 'center',
   },
   camera: {
     flex: 1,
