@@ -1,12 +1,21 @@
 {
   "cli": {
-    "version": ">=3.0.0"
+    "appVersionSource": "local"
   },
   "build": {
     "production": {
-      "android": {
-        "buildType": "apk"
+      "env": {
+        "API_URL": "https://your-deployed-backend.com"
+      }
+    },
+    "development": {
+      "env": {
+        "API_URL": "http://192.168.251.43:5000"
       }
     }
+  },
+  "submit": {
+    "production": {},
+    "development": {}
   }
 }

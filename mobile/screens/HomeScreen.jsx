@@ -264,6 +264,10 @@ export default function HomeScreen() {
 
   const colorScheme = useColorScheme();
   const tint = Colors[colorScheme ?? 'light'].tint;
+ 
+
+  console.log('🚀 API_URL:', Constants.expoConfig.extra.API_URL);
+
 
   useEffect(() => {
     (async () => {

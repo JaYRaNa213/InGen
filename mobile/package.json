@@ -3,15 +3,16 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start --env-file .env.development",
-    "start:prod": "expo start --env-file .env.production",
-    "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
-    "lint": "expo lint",
-    "eas-build-pre-install": "node eas-build-pre-install.js"
-  },
+  "start": "expo start --env-file .env.development",      
+  "start:prod": "expo start --env-file .env.production",  
+  "android": "expo run:android --env-file .env.development",
+  "ios": "expo run:ios --env-file .env.development",
+  "web": "expo start --web --env-file .env.development",
+  "reset-project": "node ./scripts/reset-project.js",
+  "lint": "expo lint",
+  "eas-build-pre-install": "node eas-build-pre-install.js"
+},
+
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
     "@react-navigation/bottom-tabs": "^7.3.10",
@@ -19,7 +20,6 @@
     "@react-navigation/native": "^7.1.6",
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow/tfjs": "^4.22.0",
-    "@tensorflow/tfjs-react-native": "^1.0.0",
     "axios": "^1.10.0",
     "babel-plugin-dotenv-import": "^3.0.1",
     "expo": "53.0.19",
@@ -62,6 +62,7 @@
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
     "babel-plugin-module-resolver": "^5.0.2",
+    "dotenv-cli": "^8.0.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
     "metro": "^0.82.5",
