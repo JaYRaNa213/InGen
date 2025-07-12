@@ -1,44 +1,14 @@
-// app/preview.jsx
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet } from 'react-native';
 
 export default function PreviewScreen() {
-  const router = useRouter();
-
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>📸 Preview Screen</Text>
-
-      <TouchableOpacity style={styles.button} onPress={() => router.back()}>
-        <Text style={styles.buttonText}>← Go Back</Text>
-      </TouchableOpacity>
+      <Text style={styles.text}>📸 This is the Preview Screen!</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 80,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    backgroundColor: '#f9f9f9',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: '#0a7ea4',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    marginTop: 20,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-  },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  text: { fontSize: 20 },
 });

@@ -299,13 +299,13 @@ export default function HomeScreen() {
     setLabels([]);
   };
 
-  const handleGoBack = () => {
-  if (router?.canGoBack?.()) {
-    router.back();
-  } else {
-    console.warn("router.back() is undefined or can't go back.");
-  }
-};
+ const handleGoBack = () => {
+    try {
+     router.replace('/home');
+     } catch (err) {
+    console.error("Navigation error:", err);
+   }
+  };
 
   if (hasPermission === null)
     return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
