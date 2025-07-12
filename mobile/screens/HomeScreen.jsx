@@ -212,26 +212,19 @@
 
 
 
-
-
-
-
-
-
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TouchableOpacity, ActivityIndicator, StyleSheet,
-  Image, ScrollView, useColorScheme, Platform,
+  Image, ScrollView, Platform, useColorScheme,
 } from 'react-native';
 import { Camera, CameraType } from 'expo-camera';
-import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as MediaLibrary from 'expo-media-library';
 import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Colors } from '../constants/Colors';
-import { fetch as tfFetch, decodeJpeg } from '@tensorflow/tfjs-react-native';
-import { generateStory } from '../services/api';
+
 
 const filterStyles = {
   'bike-vibe': { backgroundColor: 'rgba(255, 140, 0, 0.3)' },
@@ -256,56 +249,44 @@ const mockStoryData = {
 export default function HomeScreen() {
   const cameraRef = useRef(null);
   const [hasPermission, setHasPermission] = useState(null);
-  const [model, setModel] = useState(null);
   const [imageUri, setImageUri] = useState(null);
   const [storyData, setStoryData] = useState(null);
   const [labels, setLabels] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const colorScheme = useColorScheme();
-  const tint = Colors[colorScheme ?? 'light'].tint;
- 
+  const tint = Colors?.[colorScheme ?? 'light']?.tint || '#007AFF';
+  const router = useRouter();
 
-  console.log('🚀 API_URL:', Constants.expoConfig.extra.API_URL);
+  const handleGoBack = () => {
+  if (router?.back) {
+    router.back();
+  } else {
+    console.warn("router.back() is not available");
+  }
+};
 
 
   useEffect(() => {
     (async () => {
-      const { status: cameraStatus } = await Camera.requestCameraPermissionsAsync();
-      const { status: mediaStatus } = await MediaLibrary.requestPermissionsAsync();
-      setHasPermission(cameraStatus === 'granted' && mediaStatus === 'granted');
-      const loadedModel = await cocoSsd.load();
-      setModel(loadedModel);
+      const { status: camStatus } = await Camera.requestCameraPermissionsAsync();
+      const { status: libStatus } = await MediaLibrary.requestPermissionsAsync();
+      setHasPermission(camStatus === 'granted' && libStatus === 'granted');
     })();
   }, []);
 
   const takePhotoAndDetect = async () => {
-    if (!cameraRef.current || !model) return;
+    if (!cameraRef.current) return;
     setLoading(true);
     setStoryData(null);
 
     try {
       const photo = await cameraRef.current.takePictureAsync({ base64: true, skipProcessing: true });
       setImageUri(photo.uri);
-
-      const manipulated = await ImageManipulator.manipulateAsync(
-        photo.uri,
-        [{ resize: { width: 300 } }],
-        { base64: true }
-      );
-
-      const response = await tfFetch(manipulated.uri, {}, { isBinary: true });
-      const imageDataArrayBuffer = await response.arrayBuffer();
-      const imageTensor = decodeJpeg(new Uint8Array(imageDataArrayBuffer));
-      const predictions = await model.detect(imageTensor);
-      const topLabels = predictions.map(p => p.class);
-      setLabels(topLabels);
-
-      const data = await generateStory(manipulated);
-      if (!data || !data.caption) throw new Error('No story received');
-      setStoryData(data);
+      await ImageManipulator.manipulateAsync(photo.uri, [{ resize: { width: 300 } }], { base64: true });
+      setLabels(mockStoryData.labels);
+      setStoryData(mockStoryData);
     } catch (e) {
-      console.warn('⚠️ Falling back to mock data:', e.message);
+      console.warn('Error capturing image:', e.message);
       setStoryData(mockStoryData);
     }
 
@@ -318,8 +299,14 @@ export default function HomeScreen() {
     setLabels([]);
   };
 
-  if (hasPermission === null) return <ActivityIndicator size="large" />;
-  if (hasPermission === false) return <Text>No access to camera or media library</Text>;
+  
+
+  if (hasPermission === null)
+    return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
+  if (hasPermission === false)
+    return <Text style={styles.statusText}>No access to camera or media library</Text>;
+
+
 
   return (
     <View style={styles.container}>
@@ -329,22 +316,24 @@ export default function HomeScreen() {
             <Image source={{ uri: imageUri }} style={styles.preview} />
             <View style={[StyleSheet.absoluteFillObject, filterStyles[storyData.filter] || filterStyles.default]} />
           </View>
+
           <Text style={styles.subText}>🔍 Labels: {labels.join(', ')}</Text>
+
           <View style={styles.resultBox}>
             <Text style={styles.result}>🎨 Filter: {storyData.filter}</Text>
             <Text style={styles.result}>📝 Caption: {storyData.caption}</Text>
             <Text style={styles.result}>😍 Emojis: {storyData.emojis.join(' ')}</Text>
-            <Text style={styles.result}>🎵 Song: {storyData.song.title}</Text>
+            <Text style={styles.result}>🎵 Song: {storyData.song?.title || 'N/A'}</Text>
           </View>
-          <TouchableOpacity style={styles.button} onPress={handleRetake}>
-            <Ionicons name="camera" size={24} color="white" />
-            <Text style={styles.buttonText}>Retake</Text>
+
+          <TouchableOpacity onPress={handleGoBack}>
+            <Text>Back</Text>
           </TouchableOpacity>
         </ScrollView>
       ) : (
         <>
           {Platform.OS === 'web' ? (
-            <View style={[styles.camera, { backgroundColor: '#ccc', justifyContent: 'center', alignItems: 'center' }]}>
+            <View style={[styles.camera, styles.webPlaceholder]}>
               <Text>📸 Camera preview not available on Web</Text>
             </View>
           ) : (
@@ -369,9 +358,19 @@ const styles = StyleSheet.create({
     paddingTop: Constants.statusBarHeight,
     backgroundColor: '#f9f9f9',
   },
+  statusText: {
+    marginTop: 100,
+    fontSize: 18,
+    textAlign: 'center',
+  },
   camera: {
     flex: 1,
     height: 500,
+  },
+  webPlaceholder: {
+    backgroundColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   imageContainer: {
     position: 'relative',
@@ -416,7 +415,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flexDirection: 'row',
-    backgroundColor: Colors.tint,
+    backgroundColor: Colors?.light?.tint || '#007AFF',
     padding: 12,
     margin: 20,
     borderRadius: 10,
