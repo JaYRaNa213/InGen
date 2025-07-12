@@ -1,13 +1,12 @@
 mobile/
 ├── .env
-├── .env.development
 ├── .env.production
 ├── .gitignore
 ├── .vscode
 │   └── settings.json
 ├── app
 │   ├── +not-found.tsx
-│   ├── index.tsx
+│   ├── index.jsx
 │   └── _layout.tsx
 ├── app.config.js
 ├── App.js
@@ -35,6 +34,7 @@ mobile/
 │   └── ThemedView.tsx
 ├── constants
 │   └── Colors.ts
+├── eas-build-pre-install.js
 ├── eas.json
 ├── env.d.ts
 ├── eslint.config.js
@@ -48,11 +48,11 @@ mobile/
 ├── package.json
 ├── README.md
 ├── screens
-│   └── HomeScreen.jsx
 ├── scripts
 │   └── reset-project.js
 ├── services
 │   └── api.js
+├── tfjs-react-native-1.0.2.tgz
 ├── tree_mobile.js
 ├── tsconfig.json
 └── utils

@@ -210,8 +210,7 @@
 
 
 
-
-
+// screens/HomeScreen.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, TouchableOpacity, ActivityIndicator, StyleSheet,
@@ -224,7 +223,6 @@ import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Colors } from '../constants/Colors';
-
 
 const filterStyles = {
   'bike-vibe': { backgroundColor: 'rgba(255, 140, 0, 0.3)' },
@@ -253,18 +251,10 @@ export default function HomeScreen() {
   const [storyData, setStoryData] = useState(null);
   const [labels, setLabels] = useState([]);
   const [loading, setLoading] = useState(false);
+
   const colorScheme = useColorScheme();
   const tint = Colors?.[colorScheme ?? 'light']?.tint || '#007AFF';
   const router = useRouter();
-
-  const handleGoBack = () => {
-  if (router?.back) {
-    router.back();
-  } else {
-    console.warn("router.back() is not available");
-  }
-};
-
 
   useEffect(() => {
     (async () => {
@@ -280,9 +270,19 @@ export default function HomeScreen() {
     setStoryData(null);
 
     try {
-      const photo = await cameraRef.current.takePictureAsync({ base64: true, skipProcessing: true });
+      const photo = await cameraRef.current.takePictureAsync({
+        base64: true,
+        skipProcessing: true,
+      });
+
       setImageUri(photo.uri);
-      await ImageManipulator.manipulateAsync(photo.uri, [{ resize: { width: 300 } }], { base64: true });
+
+      await ImageManipulator.manipulateAsync(
+        photo.uri,
+        [{ resize: { width: 300 } }],
+        { base64: true }
+      );
+
       setLabels(mockStoryData.labels);
       setStoryData(mockStoryData);
     } catch (e) {
@@ -299,14 +299,18 @@ export default function HomeScreen() {
     setLabels([]);
   };
 
-  
+  const handleGoBack = () => {
+  if (router?.canGoBack?.()) {
+    router.back();
+  } else {
+    console.warn("router.back() is undefined or can't go back.");
+  }
+};
 
   if (hasPermission === null)
     return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
   if (hasPermission === false)
     return <Text style={styles.statusText}>No access to camera or media library</Text>;
-
-
 
   return (
     <View style={styles.container}>
@@ -327,7 +331,7 @@ export default function HomeScreen() {
           </View>
 
           <TouchableOpacity onPress={handleGoBack}>
-            <Text>Back</Text>
+            <Text style={{ textAlign: 'center', fontSize: 16, color: 'blue' }}>⬅️ Back</Text>
           </TouchableOpacity>
         </ScrollView>
       ) : (
@@ -339,12 +343,14 @@ export default function HomeScreen() {
           ) : (
             <Camera style={styles.camera} type={CameraType.back} ref={cameraRef} />
           )}
+
           <TouchableOpacity style={styles.button} onPress={takePhotoAndDetect}>
             <Ionicons name="image-outline" size={24} color="white" />
             <Text style={styles.buttonText}>Capture & Generate</Text>
           </TouchableOpacity>
         </>
       )}
+
       {loading && (
         <ActivityIndicator size="large" color={tint} style={{ marginTop: 20 }} />
       )}
@@ -415,7 +421,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flexDirection: 'row',
-    backgroundColor: Colors?.light?.tint || '#007AFF',
+    backgroundColor: Colors?.light?.tint ?? '#007AFF',
     padding: 12,
     margin: 20,
     borderRadius: 10,

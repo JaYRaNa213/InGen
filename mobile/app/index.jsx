@@ -1,7 +1,7 @@
-// app/index.tsx
+// app/index.jsx
 import React from 'react';
 import HomeScreen from '../screens/HomeScreen';
 
-export default function Page() {
+export function Page() {
   return <HomeScreen />;
 }
