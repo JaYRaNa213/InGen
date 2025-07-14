@@ -1,23 +1,27 @@
+// app/home/index.jsx
 
-
-
-
-
-
-
-// screens/HomeScreen.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, ActivityIndicator, StyleSheet,
-  Image, ScrollView, Platform, useColorScheme,
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+  Image,
+  ScrollView,
+  Platform,
+  
 } from 'react-native';
-import { Camera, CameraType } from 'expo-camera';
+import useColorScheme from '../../hooks/useColorScheme';
+
+
+import { Camera } from 'expo-camera';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as MediaLibrary from 'expo-media-library';
 import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Colors } from '../constants/Colors';
+import { Colors } from '../../constants/Colors'; // ✅ Make sure this file exports Colors correctly
 
 const filterStyles = {
   'bike-vibe': { backgroundColor: 'rgba(255, 140, 0, 0.3)' },
@@ -51,11 +55,17 @@ export default function HomeScreen() {
   const tint = Colors?.[colorScheme ?? 'light']?.tint || '#007AFF';
   const router = useRouter();
 
+  const cameraType = Camera.Constants?.Type?.back ?? 1;
+
   useEffect(() => {
     (async () => {
-      const { status: camStatus } = await Camera.requestCameraPermissionsAsync();
-      const { status: libStatus } = await MediaLibrary.requestPermissionsAsync();
-      setHasPermission(camStatus === 'granted' && libStatus === 'granted');
+      const cam = await Camera.requestCameraPermissionsAsync();
+      const media = await MediaLibrary.requestPermissionsAsync();
+      if (cam.status === 'granted' && media.status === 'granted') {
+        setHasPermission(true);
+      } else {
+        setHasPermission(false);
+      }
     })();
   }, []);
 
@@ -94,17 +104,13 @@ export default function HomeScreen() {
     setLabels([]);
   };
 
-  
-
   const handleGoBack = () => {
     try {
-     router.replace('/home');
-     } catch (err) {
-    console.error("Navigation error:", err);
-   }
+      router.replace('/home');
+    } catch (err) {
+      console.error('Navigation error:', err);
+    }
   };
-
-
 
   if (hasPermission === null)
     return <ActivityIndicator size="large" style={{ marginTop: 100 }} />;
@@ -117,7 +123,12 @@ export default function HomeScreen() {
         <ScrollView>
           <View style={styles.imageContainer}>
             <Image source={{ uri: imageUri }} style={styles.preview} />
-            <View style={[StyleSheet.absoluteFillObject, filterStyles[storyData.filter] || filterStyles.default]} />
+            <View
+              style={[
+                StyleSheet.absoluteFillObject,
+                filterStyles[storyData.filter] || filterStyles.default,
+              ]}
+            />
           </View>
 
           <Text style={styles.subText}>🔍 Labels: {labels.join(', ')}</Text>
@@ -130,11 +141,10 @@ export default function HomeScreen() {
           </View>
 
           <TouchableOpacity onPress={handleGoBack}>
-  <Text style={{ textAlign: 'center', fontSize: 16, color: 'blue' }}>
-    ⬅️ Back to Home
-  </Text>
-</TouchableOpacity>
-
+            <Text style={{ textAlign: 'center', fontSize: 16, color: 'blue' }}>
+              ⬅️ Back to Home
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
       ) : (
         <>
@@ -143,7 +153,7 @@ export default function HomeScreen() {
               <Text>📸 Camera preview not available on Web</Text>
             </View>
           ) : (
-            <Camera style={styles.camera} type={CameraType.back} ref={cameraRef} />
+            <Camera style={styles.camera} type={cameraType} ref={cameraRef} />
           )}
 
           <TouchableOpacity style={styles.button} onPress={takePhotoAndDetect}>

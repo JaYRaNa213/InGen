@@ -7,6 +7,7 @@ export default {
     name: 'InGen',
     slug: 'InGen',
     version: '1.0.0',
+    plugins: ['expo-router'],
     orientation: 'portrait',
     scheme: 'ingen',
     icon: './assets/images/icon.png',

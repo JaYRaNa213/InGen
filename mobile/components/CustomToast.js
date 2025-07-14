@@ -1,3 +1,5 @@
+//components\CustomToast.js
+
 import React from 'react';
 import { BaseToast, ErrorToast } from 'react-native-toast-message';
 
